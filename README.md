@@ -151,3 +151,29 @@ with:
         ) (attrNames attrs)) systems)
       )
 ```
+
+## Open Issues
+
+* Inside the action, we cache the complete Nix store that is used for
+  evaluation, as well as the Nix evaluation cache. This cache is used between
+  runs of the same jobs. To avoid uncontrolled growth of the cache size we GC
+  the Nix store before saving the cache. We register GC roots for the `.drv`
+  files before doing the GC, but the GC can still remove sources that was used
+  during the `nix eval` phase, because the derivations don't have direct
+  dependencies to those. This leads to some sources being re-downloaded, slowing
+  down the `nix eval` phase. For benchmarking and testing, it is possible to
+  turn off GC by setting the input `gc` to `false`. But that will lead to
+  gradual slowdown since the cache grows in size.
+
+* We need to investigate if, even with GC, we could be caching stuff that we
+  don't need to cache. If we can trim down the cache size performance could
+  improve.
+
+* Uploading `.drv` files to nixbuild.net can be slow even if they already
+  exists in nixbuild.net, if the closures are large. This is because Nix sends
+  the complete list of paths in the closure to the remote, asking the remote
+  to send back all paths that are valid. If everything is valid, this leads
+  to a lot uneccessary strings being passed back and forth. We should
+  investigate if there is an alternative way to do this with Nix, or if Nix
+  could be fixed, or if we should add some special API in nixbuild.net to fix
+  this.
