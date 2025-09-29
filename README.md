@@ -8,3 +8,108 @@ not.
 ## Overview
 
 ## Usage
+
+1. Install the nixbuild.net [GitHub App](https://github.com/apps/nixbuild-net)
+   on the repositories you wish to run nixbuild.net builds on. The app will
+   only ask for permissions to read and write Check Runs.
+
+2. Create a nixbuild.net
+   [auth token](https://docs.nixbuild.net/access-control/#using-auth-tokens)
+   with the permissions `build:read`, `build:write`, `store:read` and
+   `store:write`. If you want, you can further attenuate the token to make use
+   of [GitHub OIDC](https://blog.nixbuild.net/posts/2025-09-01-oidc-support-in-nixbuild-net.html).
+   Store the (possibly attenuated) token as a secret for your GitHub repository.
+
+3. Add a workflow that looks something like below. You need to have a Nix Flake
+   in your repository.
+
+   ```
+   package_builds:
+     name: "🚧 Package Builds"
+     runs-on: ubuntu-latest
+     permissions:
+       id-token: write
+       contents: read
+     steps:
+       - name: Install Nix
+         uses: nixbuild/nix-quick-install-action@v34
+         with:
+           nix_version: '2.31.2'
+
+       - name: Setup nixbuild.net
+         uses: nixbuild/nixbuild-action@v23
+         with:
+           nixbuild_token: ${{ secrets.nixbuild_token }}
+           oidc: true
+
+       - name: Checkout
+         uses: actions/checkout@v4
+
+       - name: Create Checks
+         uses: nixbuild/nixbuild-checks@main
+   ```
+
+### Configuring Evaluation
+
+All builds that run during a Check Run will run asynchronously on nixbuild.net
+and use the full concurrency offered there. However, the evaluation (that
+produces .drv-files uploaded to nixbuild.net) runs on your GitHub runner, and
+there are some ways you can optimise the evaluation depending on your flake
+and the specific runner size you use. The evaluation process works like this:
+
+1. `nixbuild-checks` runs `nix eval` on your Flake to find the outputs to be
+   built. You can control this process using the `flake_attr` and `flake_apply`
+   inputs, see next section.
+
+2. Now we have a list of flake outputs that we want to build. To compute the
+   corresponding `.drv` files for the output, the list is split into chunks
+   defined by the `derivations_per_worker` input, and we then start a number
+   (defined by the `evaluation_workers` input) of concurrent
+   `nix path-info --derivation` processes, each given a chunk of outputs to
+   evaluate. As soon as `nix path-info` produces a `.drv` file this is handed
+   to the next step.
+
+3. A number (defined by the `upload_workers` input) of concurrent `nix copy`
+   processes will copy the `.drv` files to nixbuild.net and then ask
+   nixbuild.net to start a build of the derivation. Information about the
+   GitHub Check Run name and labels will also be passed along this request.
+
+4. On the nixbuild.net side, a derivation build will be scheduled and the GitHub
+   API will be used to create a Check Run. During the derivation build, zero or
+   many builds and substitutions will run until the requested derivation has
+   been built or failed to build. After that, the GitHub Check Run will be
+   updated with the status.
+
+As you can see, we try to run as much as possible in parallel on the GitHub
+runner to make up for the fact that Nix evaluation can be slow. All of the
+concurrency can be tweaked for your flake and your specific runner instance
+(which can have more or less CPUs and memory).
+
+### Configuring Checks
+
+By default, this action will create one Check Run for each check output your
+flake exposes. The Check Runs will get names and labels derived from their
+system string and attribute name. You can adjust names and labels, but also
+filter your flake outputs or switch the top-level attribute used, with the
+`flake_attr` and `flake_apply` inputs. These are passed to `nix eval` to
+compute what flake outputs should get Check Runs. You can also use this to split
+your flake into multiple jobs which sometimes is beneficial for the overall
+evaluation time.
+
+Below, we use `flake_apply` to filter for `check` outputs prefixed `builds/`:
+
+```
+with:
+  flake_attr: 'checks'
+  flake_apply: |
+    systems: with builtins;
+      concatLists (
+        attrValues (mapAttrs (system: attrs: concatMap (x:
+          let m = match "^builds/(.*)" x; in
+          if m == null || m == [] then [] else [{
+            attr = "${system}.${x}";
+            label = "🚧 ${head m}.${system}";
+          }]
+        ) (attrNames attrs)) systems)
+      )
+```
