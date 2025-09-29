@@ -5,7 +5,44 @@ nixbuild.net. This action may be integrated into
 [nixbuild-action](https://github.com/nixbuild/nixbuild-action) in the future, or
 not.
 
+This action is work in progress, and so is the nixbuild.net parts (the API and
+the web UI). If you try it out, feel free open issues in this repository or
+contact support@nixbuild.net directly with feedback.
+
 ## Overview
+
+This action is similar to the [reusable CI workflow in
+nixbuild-action](https://github.com/nixbuild/nixbuild-action#using-the-ci-workflow)
+in the way it automatically evaluates and builds Nix Flake outputs. However, in
+contrast to that action, this action schedules builds asynchronously on
+nixbuild.net. That way, no GitHub Actions minutes are wasted when waiting for
+builds to finish in nixbuild.net.
+
+The way this is done is through a new experimental API in nixbuild.net that
+allows for scheduling asyncronous runs, along with the ability in nixbuild.net
+to create GitHub [Check Runs](https://docs.github.com/en/rest/checks/runs).
+
+In brief, the action works like this (see next sections for more details):
+
+1. A commit or PR will trigger your workflow that uses this action.
+
+2. This action evaluates your Nix Flake and asks nixbuild.net to build the
+   outputs.
+
+3. Your workflow is now done, an no more GitHub Actions minutes are consumed.
+
+4. nixbuild.net will call out to GitHub to create Check Runs for the derivations
+   that was submitted. A GitHub App is used to allow for creating Check Runs in
+   your repository. OIDC is used to verify that the build request actually
+   originated inside GitHub Actions for your repository. The checks will appear
+   on the commit that triggered the initial workflow, and they will start out
+   as "in progress" (yellow). If you click on a check you will see a link to
+   nixbuild.net's web UI showing the builds that are in progress for the check.
+
+5. nixbuild.net runs the necessary builds and substitutions needed for your
+   derivations and will then report back statuses (pass or fail) for the checks.
+   You will be able to find build logs by clicking on a check and then following
+   the link to the nixbuild.net web UI.
 
 ## Usage
 
@@ -21,7 +58,8 @@ not.
    Store the (possibly attenuated) token as a secret for your GitHub repository.
 
 3. Add a workflow that looks something like below. You need to have a Nix Flake
-   in your repository.
+   in your repository. Don't forget to include the `id-token: write` as below.
+   It is used for the OIDC verification.
 
    ```
    package_builds:
