@@ -299,6 +299,7 @@ runs:
 
     - name: Summary
       shell: bash
+      run: |
         T_STOP="$(printf '%s\n' "${EPOCHREALTIME/.}")"
         T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
         T_ELAPSED_TOTAL="$(printf "%.2f\n" "$(((T_STOP-T_START_0)/1000000)).$(((T_STOP-T_START_0)%1000000))")"
