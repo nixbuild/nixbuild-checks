@@ -91,7 +91,7 @@ runs:
       run: |
         : 🏃 Setup eval store
 
-        T_START="$EPOCHREALTIME"
+        T_START="$(printf '%s\n' "${EPOCHREALTIME/.}")"
 
         # TODO We could use a zram-backed filesystem instead,
         # because the eval-store is likely very compressible
@@ -132,8 +132,8 @@ runs:
         echo "CACHE_KEY_PREFIX=$CACHE_KEY_PREFIX" >> "$GITHUB_ENV"
 
         # Report time
-        T_STOP="$EPOCHREALTIME"
-        T_ELAPSED="$(printf '%d.%02d\n' $(( (T_STOP-T_START)/1000000 )) $(( (T_STOP-T_START)%1000000 )))"
+        T_STOP="$(printf '%s\n' "${EPOCHREALTIME/.}")"
+        T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
         {
           echo '|  |  |'
           echo '|:-|-:|'
@@ -160,8 +160,8 @@ runs:
         : 🏃 Run pre-evaluation script
 
         # Report time for previous step
-        T_STOP="$EPOCHREALTIME"
-        T_ELAPSED="$(printf '%d.%02d\n' $(( (T_STOP-T_START)/1000000 )) $(( (T_STOP-T_START)%1000000 )))"
+        T_STOP="$(printf '%s\n' "${EPOCHREALTIME/.}")"
+        T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
         {
           echo "|Restore cache|$T_ELAPSED"
         } >> "$GITHUB_STEP_SUMMARY"
@@ -175,7 +175,7 @@ runs:
       run: |
         : 🏃 Find installables
 
-        T_START="$EPOCHREALTIME"
+        T_START="$(printf '%s\n' "${EPOCHREALTIME/.}")"
 
         # Parse Nix args
         nix_args=()
@@ -210,8 +210,8 @@ runs:
         echo "CACHE_KEY=$CACHE_KEY" >> "$GITHUB_ENV"
 
         # Report time
-        T_STOP="$EPOCHREALTIME"
-        T_ELAPSED="$(printf '%d.%02d\n' $(( (T_STOP-T_START)/1000000 )) $(( (T_STOP-T_START)%1000000 )))"
+        T_STOP="$(printf '%s\n' "${EPOCHREALTIME/.}")"
+        T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
         {
           echo "|Find installables|$T_ELAPSED"
         } >> "$GITHUB_STEP_SUMMARY"
@@ -222,7 +222,7 @@ runs:
       run: |
         : 🏃 Evaluate and upload derivations and create check runs
 
-        T_START="$EPOCHREALTIME"
+        T_START="$(printf '%s\n' "${EPOCHREALTIME/.}")"
 
         derivations_per_worker='${{inputs.derivations_per_worker}}'
         evaluation_workers='${{inputs.evaluation_workers}}'
@@ -252,8 +252,8 @@ runs:
         ) 9>"$lock_file" # fd 9 used for locking stdout of evaluate.sh
 
         # Report time
-        T_STOP="$EPOCHREALTIME"
-        T_ELAPSED="$(printf '%d.%02d\n' $(( (T_STOP-T_START)/1000000 )) $(( (T_STOP-T_START)%1000000 )))"
+        T_STOP="$(printf '%s\n' "${EPOCHREALTIME/.}")"
+        T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
         {
           echo "|Evaluate and upload|$T_ELAPSED"
         } >> "$GITHUB_STEP_SUMMARY"
