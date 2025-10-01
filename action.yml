@@ -134,13 +134,15 @@ runs:
         # Report time
         T_STOP="$(printf '%s\n' "${EPOCHREALTIME/.}")"
         T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
+        SUMMARY_FILE="$(mktemp)"
         {
           echo '|  |  |'
           echo '|:-|-:|'
           echo "|Setup eval store|$T_ELAPSED|"
-        } >> "$GITHUB_STEP_SUMMARY"
+        } >> "$SUMMARY_FILE"
         echo "T_START=$T_STOP" >> "$GITHUB_ENV"
         echo "T_START_0=$T_START" >> "$GITHUB_ENV"
+        echo "SUMMARY_FILE=$SUMMARY_FILE" >> "$GITHUB_ENV"
 
 
     - name: Restore nix-eval-store cache
@@ -165,7 +167,7 @@ runs:
         T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
         {
           echo "|Restore cache|$T_ELAPSED|"
-        } >> "$GITHUB_STEP_SUMMARY"
+        } >> "$SUMMARY_FILE"
 
         # Run script
         ${{inputs.pre_evaluation_script}}
@@ -215,7 +217,7 @@ runs:
         T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
         {
           echo "|Find installables|$T_ELAPSED|"
-        } >> "$GITHUB_STEP_SUMMARY"
+        } >> "$SUMMARY_FILE"
 
 
     - name: Evaluate and upload derivations and create check runs
@@ -257,7 +259,7 @@ runs:
         T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
         {
           echo "|Evaluate and upload|$T_ELAPSED|"
-        } >> "$GITHUB_STEP_SUMMARY"
+        } >> "$SUMMARY_FILE"
 
         jq -s . "$process_dir"/*.json
 
@@ -282,7 +284,7 @@ runs:
         T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
         {
           echo "|Collect garbage|$T_ELAPSED|"
-        } >> "$GITHUB_STEP_SUMMARY"
+        } >> "$SUMMARY_FILE"
         echo "T_START=$T_STOP" >> "$GITHUB_ENV"
 
 
@@ -306,4 +308,5 @@ runs:
         {
           echo "|Save cache|$T_ELAPSED|"
           echo "|Total|$T_ELAPSED_TOTAL|"
-        } >> "$GITHUB_STEP_SUMMARY"
+        } >> "$SUMMARY_FILE"
+        cat "$SUMMARY_FILE" >> "$GITHUB_STEP_SUMMARY"
