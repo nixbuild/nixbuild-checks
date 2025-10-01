@@ -91,6 +91,8 @@ runs:
       run: |
         : 🏃 Setup eval store
 
+        T_START="$EPOCHREALTIME"
+
         # TODO We could use a zram-backed filesystem instead,
         # because the eval-store is likely very compressible
         sudo mkdir /run/nix-eval-store
@@ -129,6 +131,16 @@ runs:
         )"
         echo "CACHE_KEY_PREFIX=$CACHE_KEY_PREFIX" >> "$GITHUB_ENV"
 
+        # Report time
+        T_STOP="$EPOCHREALTIME"
+        T_ELAPSED="$(printf '%d.%02d\n' $(( (T_STOP-T_START)/1000000 )) $(( (T_STOP-T_START)%1000000 )))"
+        {
+          echo '|  |  |'
+          echo '|:-|-:|'
+          echo "|Setup eval store|$T_ELAPSED"
+        } >> "$GITHUB_STEP_SUMMARY"
+        echo "T_START=$T_STOP" >> "$GITHUB_ENV"
+
 
     - name: Restore nix-eval-store cache
       id: restore-nix-eval-store
@@ -147,6 +159,14 @@ runs:
       run: |
         : 🏃 Run pre-evaluation script
 
+        # Report time for previous step
+        T_STOP="$EPOCHREALTIME"
+        T_ELAPSED="$(printf '%d.%02d\n' $(( (T_STOP-T_START)/1000000 )) $(( (T_STOP-T_START)%1000000 )))"
+        {
+          echo "|Restore cache|$T_ELAPSED"
+        } >> "$GITHUB_STEP_SUMMARY"
+
+        # Run script
         ${{inputs.pre_evaluation_script}}
 
 
@@ -154,6 +174,8 @@ runs:
       shell: bash
       run: |
         : 🏃 Find installables
+
+        T_START="$EPOCHREALTIME"
 
         # Parse Nix args
         nix_args=()
@@ -187,11 +209,20 @@ runs:
         )"
         echo "CACHE_KEY=$CACHE_KEY" >> "$GITHUB_ENV"
 
+        # Report time
+        T_STOP="$EPOCHREALTIME"
+        T_ELAPSED="$(printf '%d.%02d\n' $(( (T_STOP-T_START)/1000000 )) $(( (T_STOP-T_START)%1000000 )))"
+        {
+          echo "|Find installables|$T_ELAPSED"
+        } >> "$GITHUB_STEP_SUMMARY"
+
 
     - name: Evaluate and upload derivations and create check runs
       shell: bash
       run: |
         : 🏃 Evaluate and upload derivations and create check runs
+
+        T_START="$EPOCHREALTIME"
 
         derivations_per_worker='${{inputs.derivations_per_worker}}'
         evaluation_workers='${{inputs.evaluation_workers}}'
@@ -219,6 +250,13 @@ runs:
                 "$process_dir"
               
         ) 9>"$lock_file" # fd 9 used for locking stdout of evaluate.sh
+
+        # Report time
+        T_STOP="$EPOCHREALTIME"
+        T_ELAPSED="$(printf '%d.%02d\n' $(( (T_STOP-T_START)/1000000 )) $(( (T_STOP-T_START)%1000000 )))"
+        {
+          echo "|Evaluate and upload|$T_ELAPSED"
+        } >> "$GITHUB_STEP_SUMMARY"
 
         jq -s . "$process_dir"/*.json
 
