@@ -137,9 +137,10 @@ runs:
         {
           echo '|  |  |'
           echo '|:-|-:|'
-          echo "|Setup eval store|$T_ELAPSED"
+          echo "|Setup eval store|$T_ELAPSED|"
         } >> "$GITHUB_STEP_SUMMARY"
         echo "T_START=$T_STOP" >> "$GITHUB_ENV"
+        echo "T_START_0=$T_START" >> "$GITHUB_ENV"
 
 
     - name: Restore nix-eval-store cache
@@ -163,7 +164,7 @@ runs:
         T_STOP="$(printf '%s\n' "${EPOCHREALTIME/.}")"
         T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
         {
-          echo "|Restore cache|$T_ELAPSED"
+          echo "|Restore cache|$T_ELAPSED|"
         } >> "$GITHUB_STEP_SUMMARY"
 
         # Run script
@@ -213,7 +214,7 @@ runs:
         T_STOP="$(printf '%s\n' "${EPOCHREALTIME/.}")"
         T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
         {
-          echo "|Find installables|$T_ELAPSED"
+          echo "|Find installables|$T_ELAPSED|"
         } >> "$GITHUB_STEP_SUMMARY"
 
 
@@ -255,7 +256,7 @@ runs:
         T_STOP="$(printf '%s\n' "${EPOCHREALTIME/.}")"
         T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
         {
-          echo "|Evaluate and upload|$T_ELAPSED"
+          echo "|Evaluate and upload|$T_ELAPSED|"
         } >> "$GITHUB_STEP_SUMMARY"
 
         jq -s . "$process_dir"/*.json
@@ -270,7 +271,19 @@ runs:
       shell: bash
       run: |
         : 🏃 Collect garbage
+
+        T_START="$(printf '%s\n' "${EPOCHREALTIME/.}")"
+
+        # Collect garbage
         nix store gc --quiet
+
+        # Report time
+        T_STOP="$(printf '%s\n' "${EPOCHREALTIME/.}")"
+        T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
+        {
+          echo "|Collect garbage|$T_ELAPSED|"
+        } >> "$GITHUB_STEP_SUMMARY"
+        echo "T_START=$T_STOP" >> "$GITHUB_ENV"
 
 
     - name: Save nix-eval-store cache
@@ -283,3 +296,13 @@ runs:
           /run/nix-eval-store/nix/var/nix/db
           /run/nix-eval-store/nix/store
         key: ${{env.CACHE_KEY}}
+
+    - name: Summary
+      shell: bash
+        T_STOP="$(printf '%s\n' "${EPOCHREALTIME/.}")"
+        T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
+        T_ELAPSED_TOTAL="$(printf "%.2f\n" "$(((T_STOP-T_START_0)/1000000)).$(((T_STOP-T_START_0)%1000000))")"
+        {
+          echo "|Save cache|$T_ELAPSED|"
+          echo "|Total|$T_ELAPSED_TOTAL|"
+        } >> "$GITHUB_STEP_SUMMARY"
