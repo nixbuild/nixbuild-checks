@@ -107,6 +107,8 @@ runs:
           sudo mount --bind "$HOME/__nix-eval-store" "/run/nix-eval-store"
         fi
 
+        df -h "/run/nix-eval-store"
+
         # Configure Nix
         {
           echo "NIX_CONFIG<<EOF"
