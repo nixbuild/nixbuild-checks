@@ -210,6 +210,11 @@ runs:
         )"
         echo "CACHE_KEY=$CACHE_KEY" >> "$GITHUB_ENV"
 
+        # Register GC roots for flake inputs
+        nix flake archive --json --dry-run "$FLAKE_URL" | \
+          jq -r '.. | .path? // empty' | \
+          xargs -t nix build --out-link "$(mktemp -u)"
+
         # Report time
         T_STOP="$(printf '%s\n' "${EPOCHREALTIME/.}")"
         T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
