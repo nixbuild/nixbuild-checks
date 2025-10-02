@@ -134,15 +134,13 @@ runs:
         # Report time
         T_STOP="$(printf '%s\n' "${EPOCHREALTIME/.}")"
         T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
-        SUMMARY_FILE="$(mktemp)"
+        TIME_SUMMARY_FILE="$(mktemp)"
         {
-          echo '|  |  |'
-          echo '|:-|-:|'
           echo "|Setup eval store|$T_ELAPSED|"
-        } >> "$SUMMARY_FILE"
+        } >> "$TIME_SUMMARY_FILE"
         echo "T_START_CACHE_RESTORE=$T_STOP" >> "$GITHUB_ENV"
         echo "T_START_0=$T_START" >> "$GITHUB_ENV"
-        echo "SUMMARY_FILE=$SUMMARY_FILE" >> "$GITHUB_ENV"
+        echo "TIME_SUMMARY_FILE=$TIME_SUMMARY_FILE" >> "$GITHUB_ENV"
 
 
     - name: Restore nix-eval-store cache
@@ -167,7 +165,7 @@ runs:
         T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START_CACHE_RESTORE)/1000000)).$(((T_STOP-T_START_CACHE_RESTORE)%1000000))")"
         {
           echo "|Restore cache|$T_ELAPSED|"
-        } >> "$SUMMARY_FILE"
+        } >> "$TIME_SUMMARY_FILE"
 
         # Run script
         ${{inputs.pre_evaluation_script}}
@@ -217,7 +215,7 @@ runs:
         T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
         {
           echo "|Find installables|$T_ELAPSED|"
-        } >> "$SUMMARY_FILE"
+        } >> "$TIME_SUMMARY_FILE"
 
 
     - name: Evaluate and upload derivations and create check runs
@@ -259,7 +257,7 @@ runs:
         T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
         {
           echo "|Evaluate and upload|$T_ELAPSED|"
-        } >> "$SUMMARY_FILE"
+        } >> "$TIME_SUMMARY_FILE"
 
         jq -s . "$process_dir"/*.json
 
@@ -284,7 +282,7 @@ runs:
         T_ELAPSED="$(printf "%.2f\n" "$(((T_STOP-T_START)/1000000)).$(((T_STOP-T_START)%1000000))")"
         {
           echo "|Collect garbage|$T_ELAPSED|"
-        } >> "$SUMMARY_FILE"
+        } >> "$TIME_SUMMARY_FILE"
 
     - name: Measure cache save time
       shell: bash
@@ -316,5 +314,12 @@ runs:
         {
           echo "|Save cache|$T_ELAPSED|"
           echo "|Total|$T_ELAPSED_TOTAL|"
-        } >> "$SUMMARY_FILE"
-        cat "$SUMMARY_FILE" >> "$GITHUB_STEP_SUMMARY"
+        } >> "$TIME_SUMMARY_FILE"
+
+        {
+          echo '# Summary'
+          echo '## Timings'
+          echo '|Phase|Time (s)|'
+          echo '|:-   |      -:|'
+          cat "$SUMMARY_FILE"
+        } >> "$GITHUB_STEP_SUMMARY"
