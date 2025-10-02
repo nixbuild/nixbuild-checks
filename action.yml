@@ -78,6 +78,11 @@ inputs:
       and newline, and the resulting parts will be passed as individual
       arguments.
 
+  eval_store_on_tmpfs:
+    type: boolean
+    default: true
+    required: false
+
   gc:
     type: boolean
     default: true
@@ -93,11 +98,16 @@ runs:
 
         T_START="$(printf '%s\n' "${EPOCHREALTIME/.}")"
 
-        # TODO We could use a zram-backed filesystem instead,
-        # because the eval-store is likely very compressible
         sudo mkdir /run/nix-eval-store
-        sudo mount -t tmpfs none /run/nix-eval-store \
-          -o "uid=$(id -ru),gid=$(id -rg),size=100%"
+        if [ "${{inputs.gc}}" == 'true' ] || [ "${{inputs.gc}}" == 'True' ] || [ "${{inputs.gc}}" == 'TRUE' ]; then
+          sudo mount -t tmpfs none /run/nix-eval-store \
+            -o "uid=$(id -ru),gid=$(id -rg),size=100%"
+        else
+          mkdir "$HOME/__nix-eval-store"
+          sudo mount --bind "$HOME/__nix-eval-store" "/run/nix-eval-store"
+        fi
+
+        # Configure Nix
         {
           echo "NIX_CONFIG<<EOF"
           echo -ne "${NIX_CONFIG+$NIX_CONFIG\n}"
