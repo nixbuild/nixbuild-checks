@@ -211,7 +211,7 @@ runs:
         echo "CACHE_KEY=$CACHE_KEY" >> "$GITHUB_ENV"
 
         # Register GC roots for flake inputs
-        nix flake archive --json --dry-run "$FLAKE_URL" | \
+        nix flake archive --json "$FLAKE_URL" --dry-run "${nix_args[@]}" | \
           jq -r '.. | .path? // empty' | \
           xargs -t nix build --out-link "$(mktemp -u)"
 
