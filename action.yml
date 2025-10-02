@@ -99,7 +99,7 @@ runs:
         T_START="$(printf '%s\n' "${EPOCHREALTIME/.}")"
 
         sudo mkdir /run/nix-eval-store
-        if [ "${{inputs.gc}}" == 'true' ] || [ "${{inputs.gc}}" == 'True' ] || [ "${{inputs.gc}}" == 'TRUE' ]; then
+        if [ "${{inputs.eval_store_on_tmpfs}}" == 'true' ] || [ "${{inputs.eval_store_on_tmpfs}}" == 'True' ] || [ "${{inputs.eval_store_on_tmpfs}}" == 'TRUE' ]; then
           sudo mount -t tmpfs none /run/nix-eval-store \
             -o "uid=$(id -ru),gid=$(id -rg),size=100%"
         else
