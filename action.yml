@@ -326,5 +326,5 @@ runs:
           echo '## Timings'
           echo '|Phase|Time (s)|'
           echo '|:-   |      -:|'
-          cat "$SUMMARY_FILE"
+          cat "$TIME_SUMMARY_FILE"
         } >> "$GITHUB_STEP_SUMMARY"
