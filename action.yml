@@ -280,6 +280,9 @@ runs:
 
         rm -rf "$process_dir" "$lock_file"
 
+        echo "STORE_SIZE_PRE_GC=$(du -hs --apparent-size /run/nix-eval-store/nix/store | cut -f1)" >> "$GITHUB_ENV"
+        echo "CACHE_SIZE=$(du -hs --apparent-size /run/nix-eval-store/cache | cut -f1)" >> "$GITHUB_ENV"
+
 
     - name: Collect garbage
       if: always() &&
@@ -293,6 +296,8 @@ runs:
 
         # Collect garbage
         nix store gc --quiet
+
+        echo "STORE_SIZE_POST_GC=$(du -hs --apparent-size /run/nix-eval-store/nix/store | cut -f1)" >> "$GITHUB_ENV"
 
         # Report time
         T_STOP="$(printf '%s\n' "${EPOCHREALTIME/.}")"
@@ -335,6 +340,12 @@ runs:
 
         {
           echo '# Summary'
+          echo '## Storage'
+          echo '|  |  |'
+          echo '|:-|-:|'
+          echo "|Store pre GC|$STORE_SIZE_PRE_GC|"
+          echo "|Store post GC|${STORE_SIZE_POST_GC:-$STORE_SIZE_PRE_GC}|"
+          echo "|Eval cache|$CACHE_SIZE|"
           echo '## Timings'
           echo '|Phase|Time (s)|'
           echo '|:-   |      -:|'
