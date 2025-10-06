@@ -31,9 +31,7 @@ XDG_CACHE_HOME="$cache_dir" nix path-info \
 # Loop through the (now evaluated) installables one at a time. This is so we
 # can match the installable with its resulting drv-file
 for x; do
-  nix_installable+=(
-    "$(jq -nr --argjson x "$x" '"\(env.FLAKE_URL)#\(env.FLAKE_ATTR).\($x.attr)"')"
-  )
+  nix_installable="$(jq -nr --argjson x "$x" '"\(env.FLAKE_URL)#\(env.FLAKE_ATTR).\($x.attr)"')"
   name="$(jq -nr --argjson x "$x" '$x.label')"
   title="Build $(jq -nr --argjson x "$x" '"\(env.FLAKE_ATTR).\($x.attr)"')"
 
