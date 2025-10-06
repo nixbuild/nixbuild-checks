@@ -225,7 +225,7 @@ runs:
         # Register GC roots for flake inputs
         nix flake archive --json "$FLAKE_URL" --dry-run "${nix_args[@]}" | \
           jq -r '.. | .path? // empty' | \
-          xargs -t -I{} bash -c "test -e '/run/nix-eval-store{}' && echo '{}' || true" | \
+          xargs -I{} bash -c "test -e '/run/nix-eval-store{}' && echo '{}' || true" | \
           xargs -t --no-run-if-empty nix build --out-link "$(mktemp -u)"
 
         # Report time
