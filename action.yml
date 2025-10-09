@@ -357,4 +357,9 @@ runs:
           echo '|Phase|Time (s)|'
           echo '|:-   |      -:|'
           cat "$TIME_SUMMARY_FILE"
+          echo '## Largest store paths after GC'
+          echo '```'
+          find /run/nix-eval-store/nix/store -mindepth 1 -maxdepth 1 | \
+            xargs du --apparent-size -hs | sort -hr | head -n 10
+          echo '```'
         } >> "$GITHUB_STEP_SUMMARY"
