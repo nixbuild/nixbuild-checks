@@ -288,6 +288,12 @@ runs:
         echo "STORE_SIZE_PRE_GC=$(du -hs --apparent-size /run/nix-eval-store/nix/store | cut -f1)" >> "$GITHUB_ENV"
         echo "CACHE_SIZE=$(du -hs --apparent-size /run/nix-eval-store/cache | cut -f1)" >> "$GITHUB_ENV"
 
+        STORE_PATHS_SIZES_PRE_GC_FILE="$(mktemp)"
+        find /run/nix-eval-store/nix/store -mindepth 1 -maxdepth 1 | \
+          xargs du --apparent-size -hs | (sort -hr || true) | head -n 10 \
+          > "$STORE_PATHS_SIZES_PRE_GC_FILE"
+        echo "STORE_PATHS_SIZES_PRE_GC_FILE=$STORE_PATHS_SIZES_PRE_GC_FILE" >> "$GITHUB_ENV"
+
 
     - name: Collect garbage
       if: always() &&
@@ -357,6 +363,10 @@ runs:
           echo '|Phase|Time (s)|'
           echo '|:-   |      -:|'
           cat "$TIME_SUMMARY_FILE"
+          echo '## Largest store paths before GC'
+          echo '```'
+          cat "$STORE_PATHS_SIZES_PRE_GC_FILE"
+          echo '```'
           echo '## Largest store paths after GC'
           echo '```'
           find /run/nix-eval-store/nix/store -mindepth 1 -maxdepth 1 | \
