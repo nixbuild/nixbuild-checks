@@ -188,6 +188,8 @@ runs:
       run: |
         : 🏃 Find installables
 
+        echo "STORE_SIZE_PRE_INSTALLABLES=$(du -hs --apparent-size /run/nix-eval-store/nix/store | cut -f1)" >> "$GITHUB_ENV"
+
         T_START="$(printf '%s\n' "${EPOCHREALTIME/.}")"
 
         # Parse Nix args
@@ -240,6 +242,8 @@ runs:
       shell: bash
       run: |
         : 🏃 Evaluate and upload derivations and create check runs
+
+        echo "STORE_SIZE_PRE_EVAL=$(du -hs --apparent-size /run/nix-eval-store/nix/store | cut -f1)" >> "$GITHUB_ENV"
 
         T_START="$(printf '%s\n' "${EPOCHREALTIME/.}")"
 
@@ -344,6 +348,8 @@ runs:
           echo '## Storage'
           echo '|  |  |'
           echo '|:-|-:|'
+          echo "|Store post cache restore|$STORE_SIZE_PRE_INSTALLABLES|"
+          echo "|Store pre eval|$STORE_SIZE_PRE_EVAL|"
           echo "|Store pre GC|$STORE_SIZE_PRE_GC|"
           echo "|Store post GC|${STORE_SIZE_POST_GC:-$STORE_SIZE_PRE_GC}|"
           echo "|Eval cache|$CACHE_SIZE|"
