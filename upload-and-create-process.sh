@@ -29,6 +29,19 @@ XDG_CACHE_HOME="$cache_dir" nix build --out-link "$(mktemp -u)" "$drv"
 # to the remote to ask which paths already exist remotely.
 XDG_CACHE_HOME="$cache_dir" nix copy --derivation --to ssh-ng://nixbuild "$drv"
 
+# Fetch OIDC token
+NIXBUILDNET_OIDC_ID_TOKEN="$(curl -sSL \
+  -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+  "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=nixbuild.net" | \
+  jq -j .value
+)"
+if [ -z "${NIXBUILDNET_OIDC_ID_TOKEN+x}" ]; then
+  echo >&2 "Failed retrieving OIDC ID Token from GitHub"
+  exit 1
+else
+  echo "NIXBUILDNET_OIDC_ID_TOKEN=$NIXBUILDNET_OIDC_ID_TOKEN" >> "$GITHUB_ENV"
+fi
+
 # Create process for the installable
 base_url="$NIXBUILDNET_HTTP_API_SCHEME://$NIXBUILDNET_HTTP_API_HOST:$NIXBUILDNET_HTTP_API_PORT$NIXBUILDNET_HTTP_API_SUBPATH"
 
