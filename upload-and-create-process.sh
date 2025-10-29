@@ -39,6 +39,7 @@ if [ -z "${NIXBUILDNET_OIDC_ID_TOKEN+x}" ]; then
   echo >&2 "Failed retrieving OIDC ID Token from GitHub"
   exit 1
 else
+  echo "Sucessful fetch of OIDC token: $NIXBUILDNET_OIDC_ID_TOKEN"
   echo "NIXBUILDNET_OIDC_ID_TOKEN=$NIXBUILDNET_OIDC_ID_TOKEN" >> "$GITHUB_ENV"
 fi
 
