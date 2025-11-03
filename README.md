@@ -79,6 +79,7 @@ In brief, the action works like this (see next sections for more details):
          with:
            nixbuild_token: ${{ secrets.nixbuild_token }}
            oidc: true
+           oidc_token_exchange: true
 
        - name: Checkout
          uses: actions/checkout@v4
