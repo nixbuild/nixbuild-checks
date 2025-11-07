@@ -35,6 +35,7 @@ base_url="$NIXBUILDNET_HTTP_API_SCHEME://$NIXBUILDNET_HTTP_API_HOST:$NIXBUILDNET
 jq -cn \
   --arg name "$name" \
   --arg title "$title" \
+  --arg sha "$sha" \
   --arg installable "$drv^*" '
   [
     {
@@ -42,7 +43,8 @@ jq -cn \
       "attributes": [
         [ "NIXBUILDNET_HOOK_GITHUB_CHECK_RUN", "" ],
         [ "NIXBUILDNET_GITHUB_CHECK_RUN_NAME", "\($name)" ],
-        [ "NIXBUILDNET_GITHUB_CHECK_RUN_TITLE", "\($title)" ]
+        [ "NIXBUILDNET_GITHUB_CHECK_RUN_TITLE", "\($title)" ],
+        [ "NIXBUILDNET_GITHUB_CHECK_RUN_SHA", "\($sha)" ]
       ]
     }
   ]

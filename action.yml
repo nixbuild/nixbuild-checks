@@ -5,6 +5,17 @@ description: |
 author: Rickard Nilsson
 
 inputs:
+  sha:
+    type: string
+    required: false
+    default: '$GITHUB_SHA'
+    description: |
+      The commit SHA to associate with GitHub Check Runs created by this
+      action. By default this is the value of the `GITHUB_SHA` environment
+      variable, i.e. the SHA of the commit that triggered the workflow. You
+      should probably set this input to something else if your checkout is not
+      from the commit that triggered the workflow.
+
   flake:
     type: string
     required: false
@@ -255,6 +266,8 @@ runs:
 
         process_dir="$(mktemp -d)"
         lock_file="$(mktemp --dry-run)"
+
+        export sha="${{inputs.sha}}"
 
         time (
           xargs <"$FLAKE_INSTALLABLES" \
