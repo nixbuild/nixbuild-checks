@@ -32,6 +32,8 @@ XDG_CACHE_HOME="$cache_dir" nix copy --derivation --to ssh-ng://nixbuild "$drv"
 # Create process for the installable
 base_url="$NIXBUILDNET_HTTP_API_SCHEME://$NIXBUILDNET_HTTP_API_HOST:$NIXBUILDNET_HTTP_API_PORT$NIXBUILDNET_HTTP_API_SUBPATH"
 
+sha=$(cd $GITHUB_WORKSPACE && git log -1 --pretty=format:"%H")
+
 jq -cn \
   --arg name "$name" \
   --arg title "$title" \
