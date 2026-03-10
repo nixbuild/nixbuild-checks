@@ -52,7 +52,7 @@ jq -cn \
   ]
   ' | \
   curl "$base_url/processes" \
-    -sL \
+    -L \
     --fail-with-body \
     --data-binary "@-" \
     --header "Content-Type: application/json" \
