@@ -30,9 +30,11 @@ XDG_CACHE_HOME="$cache_dir" nix build --out-link "$(mktemp -u)" "$drv"
 XDG_CACHE_HOME="$cache_dir" nix copy --derivation --to ssh-ng://nixbuild "$drv"
 
 # Create process for the installable
-base_url="$NIXBUILDNET_HTTP_API_SCHEME://$NIXBUILDNET_HTTP_API_HOST:$NIXBUILDNET_HTTP_API_PORT$NIXBUILDNET_HTTP_API_SUBPATH"
+echo >&2 "Creating process for $drv"
 
+base_url="$NIXBUILDNET_HTTP_API_SCHEME://$NIXBUILDNET_HTTP_API_HOST:$NIXBUILDNET_HTTP_API_PORT$NIXBUILDNET_HTTP_API_SUBPATH"
 sha=$(cd $GITHUB_WORKSPACE && git log -1 --pretty=format:"%H")
+process_json="$process_dir/$RANDOM$RANDOM.json"
 
 jq -cn \
   --arg name "$name" \
@@ -57,5 +59,5 @@ jq -cn \
     --data-binary "@-" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
-    -o "$process_dir/$RANDOM$RANDOM.json" \
+    -o "$process_json" \
     -H "Authorization: Bearer $NIXBUILDNET_TOKEN" \
