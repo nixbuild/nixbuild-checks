@@ -36,6 +36,8 @@ base_url="$NIXBUILDNET_HTTP_API_SCHEME://$NIXBUILDNET_HTTP_API_HOST:$NIXBUILDNET
 sha=$(cd $GITHUB_WORKSPACE && git log -1 --pretty=format:"%H")
 process_json="$process_dir/$RANDOM$RANDOM.json"
 
+set +e
+
 jq -cn \
   --arg name "$name" \
   --arg title "$title" \
@@ -55,9 +57,26 @@ jq -cn \
   ' | \
   curl "$base_url/processes" \
     -sL \
+    -w "API response: %{response_code}\n" \
     --fail-with-body \
     --data-binary "@-" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     -o "$process_json" \
-    -H "Authorization: Bearer $NIXBUILDNET_TOKEN" \
+    -H "Authorization: Bearer $NIXBUILDNET_TOKEN"
+
+case "$?" in
+  0)
+    echo >&2 "API request succeeded"
+    exit 0
+    ;;
+  22)
+    echo >&2 "API request failed"
+    cat >&2 "$process_json"
+    exit 1
+    ;;
+  *)
+    echo >&2 "Other error"
+    exit 1
+    ;;
+esac
