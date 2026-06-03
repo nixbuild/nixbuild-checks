@@ -31,7 +31,7 @@ XDG_CACHE_HOME="$cache_dir" nix build --out-link "$(mktemp -u)" "$drv"
 XDG_CACHE_HOME="$cache_dir" nix copy --derivation --to ssh-ng://nixbuild "$drv"
 
 # Create process for the installable
-echo >&2 "Creating process for $drv"
+echo >&2 "$drv_name> Creating process for $drv"
 
 base_url="$NIXBUILDNET_HTTP_API_SCHEME://$NIXBUILDNET_HTTP_API_HOST:$NIXBUILDNET_HTTP_API_PORT$NIXBUILDNET_HTTP_API_SUBPATH"
 sha=$(cd $GITHUB_WORKSPACE && git log -1 --pretty=format:"%H")
@@ -58,7 +58,7 @@ jq -cn \
   ' | \
   curl "$base_url/processes" \
     -sL \
-    -w "%{stderr}$drv_name> API response: %{response_code} ${time_total}\n" \
+    -w "%{stderr}$drv_name> API response: %{response_code} %{time_total}s\n" \
     --fail-with-body \
     --data-binary "@-" \
     --header "Content-Type: application/json" \
