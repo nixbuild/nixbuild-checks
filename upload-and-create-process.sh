@@ -13,6 +13,7 @@ json="$1"
 name="$(jq -nr --argjson x "$json" '$x.name')"
 title="$(jq -nr --argjson x "$json" '$x.title')"
 drv="$(jq -nr --argjson x "$json" '$x.drv')"
+drv_name="$(basename -s .drv "$drv" | cut -c 34-)"
 cache_dir="$(jq -nr --argjson x "$json" '$x.cache_dir')"
 
 # Register a GC root for the drv. This mean we can garbage collect the store
@@ -57,7 +58,7 @@ jq -cn \
   ' | \
   curl "$base_url/processes" \
     -sL \
-    -w "API response: %{response_code}\n" \
+    -w "$drv_name> %{stderr}API response: %{response_code}\n" \
     --fail-with-body \
     --data-binary "@-" \
     --header "Content-Type: application/json" \
@@ -67,16 +68,16 @@ jq -cn \
 
 case "$?" in
   0)
-    echo >&2 "API request succeeded"
+    echo >&2 "$drv_name> API request succeeded"
     exit 0
     ;;
   22)
-    echo >&2 "API request failed"
-    cat >&2 "$process_json"
+    awk 'BEGIN {print "'"$drv_name> "' API request failed"} {print "'"$drv_name"'> " $0}' \
+      "$process_json" >&2
     exit 1
     ;;
   *)
-    echo >&2 "Other error"
+    echo >&2 "$drv_name> Other error"
     exit 1
     ;;
 esac
