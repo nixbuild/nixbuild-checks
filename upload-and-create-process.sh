@@ -58,7 +58,7 @@ jq -cn \
   ' | \
   curl "$base_url/processes" \
     -sL \
-    -w "$drv_name> %{stderr}API response: %{response_code}\n" \
+    -w "%{stderr}$drv_name> API response: %{response_code} ${time_total}\n" \
     --fail-with-body \
     --data-binary "@-" \
     --header "Content-Type: application/json" \

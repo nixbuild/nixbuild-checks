@@ -258,7 +258,7 @@ runs:
 
         export sha="${{inputs.sha}}"
 
-        time (
+        (
           xargs <"$FLAKE_INSTALLABLES" \
             -t \
             -d '\n' \
