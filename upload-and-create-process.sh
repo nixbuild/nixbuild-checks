@@ -72,7 +72,7 @@ case "$?" in
     exit 0
     ;;
   22)
-    awk 'BEGIN {print "'"$drv_name> "' API request failed"} {print "'"$drv_name"'> " $0}' \
+    awk 'BEGIN {print "'"$drv_name> API request failed"'"} {print "'"$drv_name"'> " $0}' \
       "$process_json" >&2
     exit 1
     ;;
